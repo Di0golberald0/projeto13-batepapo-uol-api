@@ -10,5 +10,13 @@ dotenv.config();
 app.use(cors());
 app.use(express.json());
 const mongoClient = new MongoClient(process.env.MONGO_URI);
+let db;
+
+try {
+    await mongoClient.connect();
+    db = mongoClient.db('batepapo');
+} catch (err) {
+    console.log(err);
+}
 
 app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
