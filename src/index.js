@@ -150,4 +150,29 @@ app.post('/status', async (req, res) => {
     }
 });
 
+setInterval( async () => {
+    const time = Date.now() - 10000;
+
+    try {
+        const idleParticipants = await db.collection('participants').find({ lastStatus: { $lte: time } }).toArray();
+
+        if(idleParticipants.length > 0) {
+            const removalMessages = idleParticipants.map((participant) => {
+                return {
+                    from: participant.name,
+                    to: 'Todos',
+                    text: 'sai da sala...',
+                    type: 'status',
+                    time: dayjs().format('HH:MM:SS')
+                };
+            });
+
+            await db.collection('messages').insertMany(removalMessages);
+            await db.collection('participants').deletemany({ lastStatus: { $lte: time } });
+        }
+    } catch(error) {
+        res.status(500).send(error.message);
+    }
+}, 15000);
+
 app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
