@@ -14,24 +14,51 @@ const mongoClient = new MongoClient(process.env.MONGO_URI);
 let db;
 
 const participantSchema = joi.object({
-    name: joi.string().required()
+    name: joi.string().alphanum().min(1).required()
 });
 
 const messageSchema = joi.object({
-
+    from: joi.string().required(),
+    to: joi.string().alphanum().min(1).required(),
+    text: joi.string().alphanum().min(1).required(),
+    type: joi.string().valid('message', 'private message').required(),
+    time: joi.string().required()
 });
 
 try {
     await mongoClient.connect();
-    db = mongoClient.db('batepapo');
+    db = mongoClient.db('batepapouol');
 } catch (err) {
     console.log(err);
 }
 
-app.post("/participants", (req, res) => {
+app.post('/participants', async (req, res) => {
     const participant = req.body;
 
+    const validation = participantSchema.validate(participant, { abortEarly: false });
 
+    if(validation.error) {
+        const erros = validation.error.details.map((detail) => detail.message);
+        res.status(422).send(erros);
+        return;
+    }
+
+    try {
+        const participantExists = await db.collection('participants').findOne({ name: participant.name });
+        
+        if(participantExists) {
+            res.sendStatus(409);
+            return;
+        }
+
+        await db.collection('participant').insertOne({ name: participant.name, lastStatus: Date.now() });
+
+        await db.collection('messages').insertOne({ from: participant.name, to: 'Todos', text: 'entra na sala...', type: 'status', time: dayjs.format('HH:MM:SS') })
+
+        res.sendStatus(201);
+    } catch(error) {
+        res.status(500).send(error.message);
+    }
 });
 
 app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
