@@ -61,4 +61,17 @@ app.post('/participants', async (req, res) => {
     }
 });
 
+app.get('/participants', async (req, res) => {
+    try {
+        const participants = await db.collection('participant').find().toArray();
+
+        if(!participants) {
+            res.status(404).send('Nenhum participante encontrado');
+            return;
+        }
+    } catch(error) {
+        res.status(500).send(error.message);
+    }
+});
+
 app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
