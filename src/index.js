@@ -104,11 +104,31 @@ app.post('/messages', async (req, res) => {
         }
 
         await db.collection('messages').insertOne(message);
-        
+
         res.sendStatus(201);
     } catch(error) {
         res.status(500).send(error.message);
     }
 });
+
+app.get('/messages', async (req, res) => {
+    const limit = parseInt(req.query.limit);
+    const { user } = req.headers;
+
+    try {
+        const allMessages = await db.collection('messages').find().toArray();
+        const visableMessages = allMessages.filter((message) => {
+            // ?!?
+        });
+
+        if(limit && limit !== NaN) {
+            return res.send(visableMessages.slice(-limit));
+        }
+
+        res.send(visableMessages);
+    } catch(error) {
+        res.status(500).send(error.message);
+    }
+})
 
 app.listen(process.env.PORT, () => console.log(`Server running in port: ${process.env.PORT}`));
