@@ -153,6 +153,29 @@ app.post('/status', async (req, res) => {
     }
 });
 
+app.delete('/messages/:id', async (req, res) => {
+    const user = req.headers.user;
+    const { id } = req.params;
+    
+    try{
+        const collectionMessages = await db.collection('messages').findOne({ _id: new ObjectId(id) });
+
+        if(!collectionMessages) {
+            return res.sendStatus(404);
+        }
+
+        if(collectionMessages.from !== user) {
+            return res.sendStatus(401);
+        }
+
+        await db.collection('messages').deleteOne({ _id: collectionMessages._id });
+
+        res.sendStatus(200);
+    } catch(error) {
+        res.status(500).send(error.message);
+    }
+});
+
 setInterval( async () => {
     const time = Date.now() - 10000;
 
