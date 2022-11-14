@@ -118,7 +118,10 @@ app.get('/messages', async (req, res) => {
     try {
         const allMessages = await db.collection('messages').find().toArray();
         const visableMessages = allMessages.filter((message) => {
-            // ?!?
+            const { from, to, type } = message;
+            const userAllowed = from === user || to === user || to === 'Todos';
+            const publicAllowed = type === 'message';
+            return userAllowed || publicAllowed;
         });
 
         if(limit && limit !== NaN) {
